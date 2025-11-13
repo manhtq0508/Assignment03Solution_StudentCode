@@ -16,6 +16,25 @@
         </a>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-body">
+            <form class="row g-3" onsubmit="event.preventDefault(); searchOrders();">
+                <div class="col-md-4">
+                    <label for="startDate" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-4">
+                    <label for="endDate" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success me-2">Search</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <table class="table table-striped" id="ordersTable">
@@ -53,42 +72,86 @@
             loadOrders();
         });
 
+        function searchOrders() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            const url = isAdmin ? `${apiBaseUrl}/orders` : `${apiBaseUrl}/orders?member_id=${userId}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let filtered = data;
+
+                    if (startDate) {
+                        const start = new Date(startDate);
+                        start.setHours(0, 0, 0, 0);
+                        filtered = filtered.filter(order => new Date(order.orderDate) >= start);
+                    }
+
+                    if (endDate) {
+                        const end = new Date(endDate);
+                        end.setHours(23, 59, 59, 999);
+                        filtered = filtered.filter(order => new Date(order.orderDate) <= end);
+                    }
+
+                    filtered.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+
+                    renderOrders(filtered);
+                })
+                .catch(error => {
+                    console.error('Error searching orders:', error);
+                    alert('Failed to search orders');
+                });
+        }
+
+        function clearSearch() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            loadOrders();
+        }
+
         function loadOrders() {
             const url = isAdmin ? `${apiBaseUrl}/orders` : `${apiBaseUrl}/orders?member_id=${userId}`;
             
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    const tbody = document.getElementById('ordersTableBody');
-                    if (data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" class="text-center">No orders found</td></tr>`;
-                        return;
-                    }
-                    tbody.innerHTML = data.map(order => {
-                        const canDelete = order.requiredDate == null;
-                        const actionsHtml = `
-                            <a href="/Order/Detail/${order.id}" class="btn btn-sm btn-info">Detail</a>
-                            ${isAdmin ? `<a href="/Order/Edit/${order.id}" class="btn btn-sm btn-warning">Edit</a>` : ''}
-                            ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteOrder(${order.id})">Delete</button>` : ''}
-                        `;
-                        
-                        return `
-                            <tr>
-                                <td>${order.id}</td>
-                                <td>${new Date(order.orderDate).toLocaleDateString()}</td>
-                                <td>${order.requiredDate ? new Date(order.requiredDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>${order.shippedDate ? new Date(order.shippedDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>$${order.freight.toFixed(2)}</td>
-                                ${isAdmin ? `<td>${order.memberId}</td>` : ''}
-                                <td>${actionsHtml}</td>
-                            </tr>
-                        `;
-                    }).join('');
+                    data.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+                    renderOrders(data);
                 })
                 .catch(error => {
                     console.error('Error loading orders:', error);
                     alert('Failed to load orders');
                 });
+        }
+
+        function renderOrders(data) {
+            const tbody = document.getElementById('ordersTableBody');
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" class="text-center">No orders found</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = data.map(order => {
+                const canDelete = order.requiredDate == null;
+                const actionsHtml = `
+                    <a href="/Order/Detail/${order.id}" class="btn btn-sm btn-info">Detail</a>
+                    ${isAdmin ? `<a href="/Order/Edit/${order.id}" class="btn btn-sm btn-warning">Edit</a>` : ''}
+                    ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteOrder(${order.id})">Delete</button>` : ''}
+                `;
+                
+                return `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                        <td>${order.requiredDate ? new Date(order.requiredDate).toLocaleDateString() : 'N/A'}</td>
+                        <td>${order.shippedDate ? new Date(order.shippedDate).toLocaleDateString() : 'N/A'}</td>
+                        <td>$${order.freight.toFixed(2)}</td>
+                        ${isAdmin ? `<td>${order.memberId}</td>` : ''}
+                        <td>${actionsHtml}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function deleteOrder(id) {
