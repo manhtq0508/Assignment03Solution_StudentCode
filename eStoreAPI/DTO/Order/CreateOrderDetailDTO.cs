@@ -16,6 +16,7 @@ public class CreateOrderDetailDTO
     [Range(1, int.MaxValue, ErrorMessage = "Quantity must be a positive integer")]
     public int? Quantity { get; set; }
 
+    [Required(ErrorMessage = "Discount is required")]
     [Range(0, 1, ErrorMessage = "Discount must be between 0 and 1")]
     public float? Discount { get; set; } = 0;
 }

@@ -170,6 +170,11 @@
                 return;
             }
 
+            if (isNaN(discount) || discount < 0 || discount > 1) {
+                alert('Discount must be between 0 and 1');
+                return;
+            }
+
             orderDetails.push({
                 productId: productId,
                 productName: product.name,
