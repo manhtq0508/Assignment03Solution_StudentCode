@@ -106,10 +106,10 @@
 
             const patchData = {};
             if (requiredDate) {
-                patchData.requiredDate = requiredDate;
+                patchData.requiredDate = requiredDate + 'T00:00:00';
             }
             if (shippedDate) {
-                patchData.shippedDate = shippedDate;
+                patchData.shippedDate = shippedDate + 'T00:00:00';
             }
             if (freight) {
                 patchData.freight = parseFloat(freight);
