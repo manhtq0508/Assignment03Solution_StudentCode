@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="container mt-4">
+    <h2>User Management</h2>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <table class="table table-striped" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Email Confirmed</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadUsers();
+        });
+
+        function loadUsers() {
+            fetch('/User/GetUsers')
+                .then(response => response.json())
+                .then(data => {
+                    renderUsers(data);
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    alert('Failed to load users');
+                });
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const statusBadge = user.isLockedOut 
+                    ? '<span class="badge bg-danger">Locked</span>' 
+                    : '<span class="badge bg-success">Active</span>';
+
+                return `
+                    <tr>
+                        <td>${user.userName}</td>
+                        <td>${user.email}</td>
+                        <td>${user.emailConfirmed ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</td>
+                        <td>${user.roles.join(', ') || 'None'}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    </script>
+}
