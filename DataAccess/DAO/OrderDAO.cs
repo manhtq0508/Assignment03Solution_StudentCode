@@ -10,11 +10,7 @@ public static class OrderDAO
     {
         using (var context = new AppDbContext())
         {
-            return await context.Orders
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
-                        .ThenInclude(p => p.Category)
-                .ToListAsync();
+            return await context.Orders.ToListAsync();
         }
     }
 
@@ -36,9 +32,6 @@ public static class OrderDAO
         {
             return await context.Orders
                 .Where(o => o.MemberId == memberId)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
-                        .ThenInclude(p => p.Category)
                 .ToListAsync();
         }
     }
@@ -75,15 +68,6 @@ public static class OrderDAO
                 context.Orders.Remove(order);
                 await context.SaveChangesAsync();
             }
-        }
-    }
-
-    public static async Task AddOrderDetails(List<OrderDetail> orderDetails)
-    {
-        using (var context = new AppDbContext())
-        {
-            context.OrderDetails.AddRange(orderDetails);
-            await context.SaveChangesAsync();
         }
     }
 }

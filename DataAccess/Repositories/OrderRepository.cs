@@ -11,5 +11,4 @@ public class OrderRepository : IOrderRepository
     public Task AddOrderAsync(Order order) => OrderDAO.AddOrderAsync(order);
     public Task UpdateOrderAsync(Order order) => OrderDAO.UpdateOrderAsync(order);
     public Task DeleteOrderAsync(int orderId) => OrderDAO.DeleteOrderAsync(orderId);
-    public Task AddOrderDetails(List<OrderDetail> orderDetails) => OrderDAO.AddOrderDetails(orderDetails);
 }

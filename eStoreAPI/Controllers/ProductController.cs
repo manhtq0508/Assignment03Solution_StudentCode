@@ -10,12 +10,12 @@ namespace eStoreAPI.Controllers;
 [Route("api/products")]
 public class ProductController : ControllerBase
 {
-    private readonly IProductRepository productRepo = new ProductRepository();
+    private readonly IProductRepository _productRepo = new ProductRepository();
 
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProductsAsync()
     {
-        var products = await productRepo.GetProductsAsync();
+        var products = await _productRepo.GetProductsAsync();
         var productDTOs = products.Adapt<List<ProductDTO>>();
 
         return Ok(productDTOs);
@@ -24,7 +24,7 @@ public class ProductController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetProductByIdAsync(int id)
     {
-        var product = await productRepo.GetProductByIdAsync(id);
+        var product = await _productRepo.GetProductByIdAsync(id);
         if (product == null)
         {
             return NotFound($"Product with ID {id} not found.");
@@ -50,7 +50,7 @@ public class ProductController : ControllerBase
         }
 
         var product = createProductDTO.Adapt<Product>();
-        await productRepo.AddProductAsync(product);
+        await _productRepo.AddProductAsync(product);
 
         return Created(nameof(GetProductByIdAsync), new { id = product.Id });
     }
@@ -70,27 +70,27 @@ public class ProductController : ControllerBase
             return BadRequest(errorMessage);
         }
 
-        var existingProduct = await productRepo.GetProductByIdAsync(id);
+        var existingProduct = await _productRepo.GetProductByIdAsync(id);
         if (existingProduct == null)
         {
             return NotFound($"Product with ID {id} not found.");
         }
 
         putProductDTO.Adapt(existingProduct);
-        await productRepo.UpdateProductAsync(existingProduct);
+        await _productRepo.UpdateProductAsync(existingProduct);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteProductAsync(int id)
     {
-        var existingProduct = await productRepo.GetProductByIdAsync(id);
+        var existingProduct = await _productRepo.GetProductByIdAsync(id);
         if (existingProduct == null)
         {
             return NotFound($"Product with ID {id} not found.");
         }
 
-        await productRepo.DeleteProductAsync(id);
+        await _productRepo.DeleteProductAsync(id);
         return NoContent();
     }
 }

@@ -1,6 +1,6 @@
-﻿namespace BussinessObject.Entities;
+﻿namespace eStoreAPI.DTO.Order;
 
-public class Order
+public class OrderDTO
 {
     public int Id { get; set; }
     public string MemberId { get; set; } = string.Empty;
@@ -8,6 +8,4 @@ public class Order
     public DateTime? RequiredDate { get; set; }
     public DateTime? ShippedDate { get; set; }
     public decimal Freight { get; set; }
-
-    public List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 }

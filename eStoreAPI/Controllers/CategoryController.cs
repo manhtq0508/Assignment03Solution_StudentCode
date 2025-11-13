@@ -10,20 +10,20 @@ namespace eStoreAPI.Controllers;
 [Route("api/categories")]
 public class CategoryController : ControllerBase
 {
-    private readonly ICategoryRepository categoryRepo = new CateogoryRepository();
+    private readonly ICategoryRepository _categoryRepo = new CateogoryRepository();
 
     [HttpGet]
-    public async Task<IActionResult> GetCategories()
+    public async Task<IActionResult> GetCategoriesAsync()
     {
-        var categories = await categoryRepo.GetCategoriesAsync();
+        var categories = await _categoryRepo.GetCategoriesAsync();
         var categoriesDTOs = categories.Adapt<List<CategoryDTO>>();
         return Ok(categoriesDTOs);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetCategoryById(int id)
+    public async Task<IActionResult> GetCategoryByIdAsync(int id)
     {
-        var category = await categoryRepo.GetCategoryByIdAsync(id);
+        var category = await _categoryRepo.GetCategoryByIdAsync(id);
         if (category == null)
         {
             return NotFound($"Category with ID {id} not found.");
@@ -35,7 +35,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDTO categoryDTO)
+    public async Task<IActionResult> CreateCategoryAsync([FromBody] CreateCategoryDTO categoryDTO)
     {
         if (categoryDTO == null)
         {
@@ -50,13 +50,13 @@ public class CategoryController : ControllerBase
         }
 
         var category = categoryDTO.Adapt<Category>();
-        await categoryRepo.AddCategoryAsync(category);
+        await _categoryRepo.AddCategoryAsync(category);
 
-        return CreatedAtAction(nameof(GetCategoryById), new { id = category.Id });
+        return Created(nameof(GetCategoryByIdAsync), new { id = category.Id });
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateCategory(int id, [FromBody] PutCategoryDTO categoryDTO)
+    public async Task<IActionResult> UpdateCategoryAsync(int id, [FromBody] PutCategoryDTO categoryDTO)
     {
         if (categoryDTO == null)
         {
@@ -68,7 +68,7 @@ public class CategoryController : ControllerBase
             var errorMessage = string.Join("\n", errors);
             return BadRequest(errorMessage);
         }
-        var existingCategory = await categoryRepo.GetCategoryByIdAsync(id);
+        var existingCategory = await _categoryRepo.GetCategoryByIdAsync(id);
         if (existingCategory == null)
         {
             return NotFound($"Category with ID {id} not found.");
@@ -76,19 +76,19 @@ public class CategoryController : ControllerBase
 
         categoryDTO.Adapt(existingCategory);
 
-        await categoryRepo.UpdateCategoryAsync(existingCategory);
+        await _categoryRepo.UpdateCategoryAsync(existingCategory);
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteCategory(int id)
+    public async Task<IActionResult> DeleteCategoryAsync(int id)
     {
-        var existingCategory = await categoryRepo.GetCategoryByIdAsync(id);
+        var existingCategory = await _categoryRepo.GetCategoryByIdAsync(id);
         if (existingCategory == null)
         {
             return NotFound($"Category with ID {id} not found.");
         }
-        await categoryRepo.DeleteCategoryAsync(id);
+        await _categoryRepo.DeleteCategoryAsync(id);
         return NoContent();
     }
 }

@@ -10,5 +10,4 @@ public interface IOrderRepository
     Task AddOrderAsync(Order order);
     Task UpdateOrderAsync(Order order);
     Task DeleteOrderAsync(int orderId);
-    Task AddOrderDetails(List<OrderDetail> orderDetails);
 }

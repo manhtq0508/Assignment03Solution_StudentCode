@@ -4,6 +4,6 @@ namespace eStoreAPI.DTO.Category;
 
 public class CreateCategoryDTO
 {
-    [Required(AllowEmptyStrings = false, ErrorMessage = "Category name is required.")]
+    [Required(AllowEmptyStrings = false, ErrorMessage = "CategoryName is required.")]
     public string Name { get; set; } = string.Empty;
 }
