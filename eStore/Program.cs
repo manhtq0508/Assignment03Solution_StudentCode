@@ -28,6 +28,14 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.AccessDeniedPath = "/Home/AccessDenied";
+    options.LoginPath = "/Identity/Account/Login";
+});
+
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -61,6 +69,7 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
