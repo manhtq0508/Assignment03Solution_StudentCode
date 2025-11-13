@@ -1,0 +1,115 @@
+@inject IConfiguration Configuration
+@inject Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser> UserManager
+
+@{
+    ViewData["Title"] = "Orders";
+    var user = await UserManager.GetUserAsync(User);
+    var userId = user?.Id;
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@(isAdmin ? "All Orders" : "My Orders")</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Order
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped" id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Order Date</th>
+                        <th>Required Date</th>
+                        <th>Shipped Date</th>
+                        <th>Freight</th>
+                        @if (isAdmin)
+                        {
+                            <th>Member ID</th>
+                        }
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr>
+                        <td colspan="@(isAdmin ? 7 : 6)" class="text-center">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const apiBaseUrl = '@Configuration["ApiBaseUrl"]';
+        const userId = '@userId';
+        const isAdmin = @(isAdmin ? "true" : "false");
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadOrders();
+        });
+
+        function loadOrders() {
+            const url = isAdmin ? `${apiBaseUrl}/orders` : `${apiBaseUrl}/orders?member_id=${userId}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('ordersTableBody');
+                    if (data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 7 : 6}" class="text-center">No orders found</td></tr>`;
+                        return;
+                    }
+                    tbody.innerHTML = data.map(order => {
+                        const canDelete = order.requiredDate == null;
+                        const actionsHtml = `
+                            <a href="/Order/Detail/${order.id}" class="btn btn-sm btn-info">Detail</a>
+                            ${isAdmin ? `<a href="/Order/Edit/${order.id}" class="btn btn-sm btn-warning">Edit</a>` : ''}
+                            ${canDelete ? `<button class="btn btn-sm btn-danger" onclick="deleteOrder(${order.id})">Delete</button>` : ''}
+                        `;
+                        
+                        return `
+                            <tr>
+                                <td>${order.id}</td>
+                                <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                                <td>${order.requiredDate ? new Date(order.requiredDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>${order.shippedDate ? new Date(order.shippedDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>$${order.freight.toFixed(2)}</td>
+                                ${isAdmin ? `<td>${order.memberId}</td>` : ''}
+                                <td>${actionsHtml}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading orders:', error);
+                    alert('Failed to load orders');
+                });
+        }
+
+        function deleteOrder(id) {
+            if (!confirm('Are you sure you want to delete this order?')) {
+                return;
+            }
+
+            fetch(`${apiBaseUrl}/orders/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to delete order');
+                    }
+                    loadOrders();
+                    alert('Order deleted successfully');
+                })
+                .catch(error => {
+                    console.error('Error deleting order:', error);
+                    alert('Failed to delete order');
+                });
+        }
+    </script>
+}

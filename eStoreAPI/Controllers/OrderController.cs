@@ -11,6 +11,7 @@ namespace eStoreAPI.Controllers;
 public class OrderController : ControllerBase
 {
     private readonly IOrderRepository _orderRepo = new OrderRepository();
+    private readonly IProductRepository _productRepo = new ProductRepository();
 
     [HttpGet]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] string? member_id)
@@ -59,10 +60,37 @@ public class OrderController : ControllerBase
             return BadRequest(errorMessage);
         }
 
+        var productIds = orderDTO.OrderDetails.Select(od => od.ProductId!.Value).Distinct().ToList();
+        if (productIds.Count != orderDTO.OrderDetails.Count)
+        {
+            return BadRequest("Duplicate products are not allowed in order details.");
+        }
+
+        foreach (var detail in orderDTO.OrderDetails)
+        {
+            var product = await _productRepo.GetProductByIdAsync(detail.ProductId!.Value);
+            if (product == null)
+            {
+                return BadRequest($"Product with ID {detail.ProductId} not found.");
+            }
+
+            if (product.UnitsInStock < detail.Quantity!.Value)
+            {
+                return BadRequest($"Product '{product.Name}' has insufficient stock. Available: {product.UnitsInStock}, Requested: {detail.Quantity}");
+            }
+        }
+
         var order = orderDTO.Adapt<Order>();
         order.OrderDate = DateTime.UtcNow;
 
         await _orderRepo.AddOrderAsync(order);
+
+        foreach (var detail in orderDTO.OrderDetails)
+        {
+            var product = await _productRepo.GetProductByIdAsync(detail.ProductId!.Value);
+            product!.UnitsInStock -= detail.Quantity!.Value;
+            await _productRepo.UpdateProductAsync(product);
+        }
 
         return Created(nameof(GetOrderByIdAsync), new { id = order.Id });
     }

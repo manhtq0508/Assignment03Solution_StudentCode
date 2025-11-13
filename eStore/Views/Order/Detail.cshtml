@@ -1,0 +1,103 @@
+@inject IConfiguration Configuration
+@{
+    ViewData["Title"] = "Order Detail";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Order Detail</h3>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+        <div class="card-body" id="orderDetailContent">
+            <p class="text-center">Loading...</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const apiBaseUrl = '@Configuration["ApiBaseUrl"]';
+        const orderId = @ViewContext.RouteData.Values["id"];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadOrderDetail();
+        });
+
+        function loadOrderDetail() {
+            fetch(`${apiBaseUrl}/orders/${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Order not found');
+                    }
+                    return response.json();
+                })
+                .then(order => {
+                    let total = 0;
+                    const detailsHtml = order.orderDetails.map(od => {
+                        const subtotal = od.unitPrice * od.quantity * (1 - od.discount);
+                        total += subtotal;
+                        return `
+                            <tr>
+                                <td>${od.product.name}</td>
+                                <td>$${od.unitPrice.toFixed(2)}</td>
+                                <td>${od.quantity}</td>
+                                <td>${(od.discount * 100).toFixed(0)}%</td>
+                                <td>$${subtotal.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    const html = `
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Order ID:</strong> ${order.id}</p>
+                                <p><strong>Member ID:</strong> ${order.memberId}</p>
+                                <p><strong>Order Date:</strong> ${new Date(order.orderDate).toLocaleDateString()}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Required Date:</strong> ${order.requiredDate ? new Date(order.requiredDate).toLocaleDateString() : 'N/A'}</p>
+                                <p><strong>Shipped Date:</strong> ${order.shippedDate ? new Date(order.shippedDate).toLocaleDateString() : 'N/A'}</p>
+                                <p><strong>Freight:</strong> $${order.freight.toFixed(2)}</p>
+                            </div>
+                        </div>
+                        <h5 class="mt-4">Order Items</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Unit Price</th>
+                                    <th>Quantity</th>
+                                    <th>Discount</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${detailsHtml}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="4" class="text-end">Total:</th>
+                                    <th>$${total.toFixed(2)}</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" class="text-end">Freight:</th>
+                                    <th>$${order.freight.toFixed(2)}</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" class="text-end">Grand Total:</th>
+                                    <th>$${(total + order.freight).toFixed(2)}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    `;
+
+                    document.getElementById('orderDetailContent').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading order detail:', error);
+                    document.getElementById('orderDetailContent').innerHTML = '<p class="text-danger">Failed to load order details</p>';
+                });
+        }
+    </script>
+}
